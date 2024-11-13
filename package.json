@@ -1,6 +1,6 @@
 {
   "name": "nznode",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Class for nzserver",
   "keywords": [ "class", "node", "nodes" ],
   "author": {
