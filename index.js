@@ -87,11 +87,13 @@ class nznode {
 				let list = JSON.parse(res);
 				let keys = Object.keys(list);
 				for (let i = 0, l = keys.length; i < l; i++) {
-					if (!this.nodes[keys[i]]) this.nodes[keys[i]] = {
-						host: list[keys[i]].host,
-						port: list[keys[i]].port,
-						ping: list[keys[i]].ping
-					};
+					if (this.nodes[keys[i]] === undefined) {
+						var node = await this.getInfo({
+							host: list[keys[i]].host,
+							port: list[keys[i]].port
+						});
+						if (node !== false) await this.checkNodeInDB(node);
+					}
 				}
 			}
 		} catch(e) {
