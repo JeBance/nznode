@@ -32,7 +32,7 @@ class nznode {
 			await this.DB.write(null, 'nodes.json', JSON.stringify(this.nodes));
 			console.log('\x1b[1m%s\x1b[0m', 'New node:', node.keyID, node.host + ':' + node.port, `(${node.ping} ms)`);
 		} catch(e) {
-			console.log(e);
+//			console.log(e);
 			return false;
 		}
 	}
@@ -43,7 +43,7 @@ class nznode {
 			await this.DB.delete('nodes', keyID);
 			delete this.nodes[keyID];
 		} catch(e) {
-			console.log(e);
+//			console.log(e);
 		}
 	}
 
@@ -95,7 +95,7 @@ class nznode {
 				}
 			}
 		} catch(e) {
-			console.log(e);
+//			console.log(e);
 			return false;
 		}
 	}
@@ -114,7 +114,7 @@ class nznode {
 			};
 			await doRequest(options, JSON.stringify(message));
 		} catch(e) {
-			console.log(e);
+//			console.log(e);
 		}
 	}
 
@@ -125,7 +125,7 @@ class nznode {
 				await this.sendMessage({ host: this.nodes[keys[i]].host, port: this.nodes[keys[i]].port }, message);
 			}
 		} catch(e) {
-			console.log(e);
+//			console.log(e);
 		}
 	}
 
@@ -136,7 +136,7 @@ class nznode {
 			let encrypted = await this.PGP.encryptMessage(JSON.stringify(address), node.publicKey, true);
 			await this.sendMessage(node, { handshake: encrypted });
 		} catch(e) {
-			console.log(e);
+//			console.log(e);
 		}
 	}
 
@@ -164,7 +164,7 @@ class nznode {
 				}
 			}
 		} catch(e) {
-			console.log(e);
+//			console.log(e);
 		}
 	}
 
@@ -182,7 +182,7 @@ class nznode {
 					await this.remove(keys[i]);
 				}
 			} catch(e) {
-				console.log(e);
+//				console.log(e);
 			}
 		}
 	}
@@ -216,7 +216,7 @@ class nznode {
 				var node = await this.getInfo({ host: host, port: port });
 				if (node !== false) await this.checkNodeInDB(node);
 			} catch(e) {
-				console.log(e);
+//				console.log(e);
 			}
 		}
 	}
