@@ -151,6 +151,7 @@ class nznode {
 					let publicKeyArmored = await this.DB.read('nodes', keyID);
 					if (publicKeyArmored === node.publicKey) {
 						this.nodes[keyID].ping = node.ping;
+						this.sendHandshake(node);
 					} else {
 						await this.remove(keyID);
 					}
