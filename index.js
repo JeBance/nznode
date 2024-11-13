@@ -133,7 +133,7 @@ class nznode {
 
 	async sendHandshake(node = { host: '127.0.0.1', port: 28262 }) {
 		try {
-			console.log('Sending handshake to', node.host + ':' + node.port);
+//			console.log('Sending handshake to', node.host + ':' + node.port);
 			let address = {	host: this.CONFIG.host, port: this.CONFIG.port };
 			let encrypted = await this.PGP.encryptMessage(JSON.stringify(address), node.publicKey, true);
 			await this.sendMessage(node, { handshake: encrypted });
