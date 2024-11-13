@@ -150,7 +150,7 @@ class nznode {
 					if (publicKeyArmored === node.publicKey) {
 						this.nodes[keyID].ping = node.ping;
 					} else {
-						await NODE.remove(keyID);
+						await this.remove(keyID);
 					}
 				} else {
 					await this.add({
@@ -176,7 +176,11 @@ class nznode {
 					host: this.nodes[keys[i]].host,
 					port: this.nodes[keys[i]].port
 				});
-				await this.checkNodeInDB(node);
+				if (node !== false) {
+					await this.checkNodeInDB(node);
+				} else {
+					await this.remove(keys[i]);
+				}
 			} catch(e) {
 				console.log(e);
 			}
@@ -205,12 +209,12 @@ class nznode {
 	async pingAddresses(address) {
 		let addr = address.split('.');
 		let host, port;
-		for (let i = 100, l = 110; i < l; i++) {
+		for (let i = 1, l = 255; i < l; i++) {
 			try {
 				host = addr[0] + '.' + addr[1] + '.' + addr[2] + '.' + i;
 				port = '28262';
 				var node = await this.getInfo({ host: host, port: port });
-				await this.checkNodeInDB(node);
+				if (node !== false) await this.checkNodeInDB(node);
 			} catch(e) {
 				console.log(e);
 			}
