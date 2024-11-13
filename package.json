@@ -1,0 +1,25 @@
+{
+  "name": "nznode",
+  "version": "1.0.0",
+  "description": "Class for nzserver",
+  "keywords": [ "class", "node", "nodes" ],
+  "author": {
+    "name": "Oleg Prudkov",
+    "email": "oleg.prudkov@gmail.com",
+    "url": "https://jebance.github.io"
+  },
+  "main": "index.js",
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JeBance/nznode.git"
+  },
+  "license": "LGPL-3.0+",
+  "bugs": {
+    "url": "https://github.com/JeBance/nznode/issues"
+  },
+  "homepage": "https://jebance.github.io/nznode/",
+  "dependencies": {
+    "nzfunc": "^1.0.2"
+  }
+}
