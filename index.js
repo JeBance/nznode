@@ -42,6 +42,7 @@ class nznode {
 			console.log('\x1b[1m%s\x1b[0m', 'Node removed:', keyID, this.nodes[keyID].host + ':' + this.nodes[keyID].port);
 			await this.DB.delete('nodes', keyID);
 			delete this.nodes[keyID];
+			await this.DB.write(null, 'nodes.json', JSON.stringify(this.nodes));
 		} catch(e) {
 //			console.log(e);
 		}
