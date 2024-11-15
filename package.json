@@ -1,8 +1,8 @@
 {
   "name": "nznode",
-  "version": "1.0.5",
+  "version": "1.0.8",
   "description": "Class for nzserver",
-  "keywords": [ "class", "node", "nodes" ],
+  "keywords": [ "class", "node", "nodes", "nz", "nzserver" ],
   "author": {
     "name": "Oleg Prudkov",
     "email": "oleg.prudkov@gmail.com",
