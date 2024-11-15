@@ -179,7 +179,7 @@ class nznode {
 					host: this.nodes[keys[i]].host,
 					port: this.nodes[keys[i]].port
 				});
-				if (node !== false) {
+				if ((node !== false) && (node.net === this.CONFIG.net) && (node.publicKey !== this.PGP.publicKeyArmored)) {
 					await this.checkNodeInDB(node);
 				} else {
 					await this.remove(keys[i]);
@@ -216,8 +216,10 @@ class nznode {
 			try {
 				host = addr[0] + '.' + addr[1] + '.' + addr[2] + '.' + i;
 				port = '28262';
-				var node = await this.getInfo({ host: host, port: port });
-				if (node !== false) await this.checkNodeInDB(node);
+				if (host !== this.CONFIG.host) {
+					var node = await this.getInfo({ host: host, port: port });
+					if ((node !== false) && (node.net === this.CONFIG.net)) await this.checkNodeInDB(node);
+				}
 			} catch(e) {
 //				console.log(e);
 			}
