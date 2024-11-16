@@ -227,6 +227,50 @@ class nznode {
 		}
 	}
 
+	async getMessage(keyID = 'someKeyMessage', address = { host: '127.0.0.1', port: 28262 }) {
+		try {
+			let options = {
+				host: address.host,
+				port: address.port,
+				path: '/getMessage?' + keyID,
+				method: 'GET'
+			};
+			let req = await doRequest(options);
+			if (req.statusCode == 200) {
+				let res = await getResponse(req);
+				let message = JSON.parse(res);
+				return message;
+			} else {
+				return false;
+			}
+		} catch(e) {
+//			console.log(e);
+			return false;
+		}
+	}
+
+	async getMessages(address = { host: '127.0.0.1', port: 28262 }) {
+		try {
+			let options = {
+				host: address.host,
+				port: address.port,
+				path: '/getMessages',
+				method: 'GET'
+			};
+			let req = await doRequest(options);
+			if (req.statusCode == 200) {
+				let res = await getResponse(req);
+				let list = JSON.parse(res);
+				return list;
+			} else {
+				return false;
+			}
+		} catch(e) {
+//			console.log(e);
+			return false;
+		}
+	}
+
 }
 
 module.exports = nznode;
