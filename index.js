@@ -132,6 +132,21 @@ class nznode {
 		}
 	}
 
+	async sendNewMessageToAll(message = {}) {
+		try {
+			let keys = Object.keys(this.nodes);
+			for (let i = 0, l = keys.length; i < l; i++) {
+				let publicKeyArmored = await this.DB.read('nodes', this.nodes[keys[i]]);
+				// create the command "newMessage"
+				let command = JSON.stringify(message);
+				let encrypted = await PGP.encryptMessage(command, publicKeyArmored, true);
+				await this.sendMessage({ host: this.nodes[keys[i]].host, port: this.nodes[keys[i]].port }, { newMessage: encrypted });
+			}
+		} catch(e) {
+//			console.log(e);
+		}
+	}
+
 	async sendHandshake(node = { host: '127.0.0.1', port: 28262 }) {
 		try {
 //			console.log('Sending handshake to', node.host + ':' + node.port);
@@ -272,6 +287,8 @@ class nznode {
 	}
 
 	async senderCommandVerification(command) {
+		console.log(command);
+		console.log(await this.PGP.decryptMessage(command));
 		// receives an encrypted message with a command for the server inside
 		let result = {
 			decrypted: null,
