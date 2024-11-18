@@ -139,7 +139,7 @@ class nznode {
 				let publicKeyArmored = await this.DB.read('nodes', keys[i]);
 				// create the command "newMessage"
 				let command = JSON.stringify(message);
-				let encrypted = await PGP.encryptMessage(command, publicKeyArmored, true);
+				let encrypted = await this.PGP.encryptMessage(command, publicKeyArmored, true);
 				await this.sendMessage({ host: this.nodes[keys[i]].host, port: this.nodes[keys[i]].port }, { newMessage: encrypted });
 			}
 		} catch(e) {
@@ -287,8 +287,6 @@ class nznode {
 	}
 
 	async senderCommandVerification(command) {
-		console.log(command);
-		console.log(await this.PGP.decryptMessage(command));
 		// receives an encrypted message with a command for the server inside
 		let result = {
 			decrypted: null,
