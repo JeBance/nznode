@@ -136,7 +136,7 @@ class nznode {
 		try {
 			let keys = Object.keys(this.nodes);
 			for (let i = 0, l = keys.length; i < l; i++) {
-				let publicKeyArmored = await this.DB.read('nodes', this.nodes[keys[i]]);
+				let publicKeyArmored = await this.DB.read('nodes', keys[i]);
 				// create the command "newMessage"
 				let command = JSON.stringify(message);
 				let encrypted = await PGP.encryptMessage(command, publicKeyArmored, true);
