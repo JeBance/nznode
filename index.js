@@ -271,6 +271,30 @@ class nznode {
 		}
 	}
 
+	async senderCommandVerification(command) {
+		// receives an encrypted message with a command for the server inside
+		let result = {
+			decrypted: null,
+			result: true
+		};
+		try {
+			result.decrypted = await this.PGP.decryptMessage(command);
+			if (!result.decrypted) throw new Error();
+			let senderKeyID, senderPublicKeyArmored;
+			senderKeyID = result.decrypted.signatures[0].keyID.toHex();
+			if (this.nodes[senderKeyID] === undefined) throw new Error();
+			// check for the presence of a public key in the database of known nodes
+			senderPublicKeyArmored = await this.DB.read('nodes', senderKeyID);
+			if (!senderPublicKeyArmored) throw new Error();
+			// verification using public key
+			result.decrypted = await this.PGP.decryptMessage(command, senderPublicKeyArmored);
+			await result.decrypted.signatures[0].verified; // throws on invalid signature
+		} catch(e) {
+			result.result = false;
+		}
+		return result;
+	}
+
 }
 
 module.exports = nznode;
