@@ -208,7 +208,7 @@ class nznode {
 	async pingAddresses(address) {
 		let addr = address.split('.');
 		let host, port;
-		for (let i = 100, l = 110; i < l; i++) {
+		for (let i = 1, l = 255; i < l; i++) {
 			try {
 				host = addr[0] + '.' + addr[1] + '.' + addr[2] + '.' + i;
 				port = '28262';
