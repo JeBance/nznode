@@ -1,13 +1,14 @@
-const { doRequest,
+const { getHASH,
+		doRequest,
 		getResponse } = require('nzfunc');
 const { networkInterfaces } = require('os');
 
 class nznode {
-	CONFIG;
+	config;
 	nodes;
 
-	constructor(CONFIG) {
-		this.CONFIG = CONFIG;
+	constructor(config) {
+		this.config = config;
 		this.nodes = {};
 	}
 
@@ -21,7 +22,7 @@ class nznode {
 			};
 			console.log('\x1b[1m%s\x1b[0m', 'New node:', node.keyID, node.host + ':' + node.port, `(${node.ping} ms)`);
 		} catch(e) {
-			console.log(e);
+//			console.log(e);
 			return false;
 		}
 	}
@@ -31,7 +32,7 @@ class nznode {
 			console.log('\x1b[1m%s\x1b[0m', 'Node removed:', keyID, this.nodes[keyID].host + ':' + this.nodes[keyID].port);
 			delete this.nodes[keyID];
 		} catch(e) {
-			console.log(e);
+//			console.log(e);
 		}
 	}
 
@@ -47,7 +48,7 @@ class nznode {
 			}), 'md5');
 			return hash;
 		} catch(e) {
-			console.log(e);
+//			console.log(e);
 			return false;
 		}
 	}
@@ -73,7 +74,7 @@ class nznode {
 				return false;
 			}
 		} catch(e) {
-			console.log(e);
+//			console.log(e);
 			return false;
 		}
 	}
@@ -102,7 +103,7 @@ class nznode {
 				}
 			}
 		} catch(e) {
-			console.log(e);
+//			console.log(e);
 			return false;
 		}
 	}
@@ -121,7 +122,7 @@ class nznode {
 			};
 			await doRequest(options, JSON.stringify(message));
 		} catch(e) {
-			console.log(e);
+//			console.log(e);
 		}
 	}
 
@@ -135,29 +136,29 @@ class nznode {
 				}, message);
 			}
 		} catch(e) {
-			console.log(e);
+//			console.log(e);
 		}
 	}
 
 	async sendHandshake(node = { host: '127.0.0.1', port: 28262 }) {
 		try {
 			let address = {
-				net: this.CONFIG.net,
-				host: this.CONFIG.host,
-				port: this.CONFIG.port
+				net: this.config.net,
+				host: this.config.host,
+				port: this.config.port
 			};
 			await this.sendMessage(node, { handshake: address });
 		} catch(e) {
-			console.log(e);
+//			console.log(e);
 		}
 	}
 
 	async checkNodeInDB(node = { net: 'ALPHA', host: '127.0.0.1', port: '28262', ping: 10 }) {
 		try {
-			let hash = getNodeHash(node);
+			let hash = await this.getNodeHash(node);
 			if (!hash) throw new Error('Unknown parameter hash');
 			if (this.nodes[hash]) throw new Error('Node already exists in the list');
-			if (node.net !== config.net) throw new Error('The node is not from our network');
+			if (node.net !== this.config.net) throw new Error('The node is not from our network');
 			this.add({
 				keyID: hash,
 				net: node.net,
@@ -166,7 +167,7 @@ class nznode {
 				ping: node.ping
 			});
 		} catch(e) {
-			console.log(e);
+//			console.log(e);
 		}
 	}
 
@@ -179,7 +180,7 @@ class nznode {
 					host: this.nodes[keys[i]].host,
 					port: this.nodes[keys[i]].port
 				});
-				if ((node !== false) && (node.net === this.CONFIG.net)) {
+				if ((node !== false) && (node.net === this.config.net)) {
 					await this.checkNodeInDB(node);
 				} else {
 					this.remove(keys[i]);
@@ -216,9 +217,9 @@ class nznode {
 			try {
 				host = addr[0] + '.' + addr[1] + '.' + addr[2] + '.' + i;
 				port = '28262';
-				if (host !== this.CONFIG.host) {
+				if (host !== this.config.host) {
 					var node = await this.getInfo({ host: host, port: port });
-					if ((node !== false) && (node.net === this.CONFIG.net)) await this.checkNodeInDB(node);
+					if ((node !== false) && (node.net === this.config.net)) await this.checkNodeInDB(node);
 				}
 			} catch(e) {
 //				console.log(e);
