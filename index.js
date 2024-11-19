@@ -14,16 +14,10 @@ class nznode {
 
 	async add(node = { keyID: 'keyID', net: 'ALPHA', host: '127.0.0.1', port: 28262, ping: 10 } ) {
 		try {
-			this.nodes[node.keyID] = {
-				net: node.net,
-				host: node.host,
-				port: node.port,
-				ping: node.ping
-			};
+			this.nodes[node.keyID] = node;
 			console.log('\x1b[1m%s\x1b[0m', 'New node:', node.keyID, node.host + ':' + node.port, `(${node.ping} ms)`);
 		} catch(e) {
-//			console.log(e);
-			return false;
+			console.log(e);
 		}
 	}
 
@@ -32,7 +26,7 @@ class nznode {
 			console.log('\x1b[1m%s\x1b[0m', 'Node removed:', keyID, this.nodes[keyID].host + ':' + this.nodes[keyID].port);
 			delete this.nodes[keyID];
 		} catch(e) {
-//			console.log(e);
+			console.log(e);
 		}
 	}
 
@@ -166,6 +160,7 @@ class nznode {
 				port: node.port,
 				ping: node.ping
 			});
+			await this.sendHandshake(node);
 		} catch(e) {
 //			console.log(e);
 		}
@@ -213,7 +208,7 @@ class nznode {
 	async pingAddresses(address) {
 		let addr = address.split('.');
 		let host, port;
-		for (let i = 1, l = 255; i < l; i++) {
+		for (let i = 100, l = 110; i < l; i++) {
 			try {
 				host = addr[0] + '.' + addr[1] + '.' + addr[2] + '.' + i;
 				port = '28262';
