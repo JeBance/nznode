@@ -4,35 +4,24 @@ const { networkInterfaces } = require('os');
 
 class nznode {
 	CONFIG;
-	DB;
-	PGP;
 	nodes;
 
-	constructor(CONFIG, DB, PGP) {
+	constructor(CONFIG) {
 		this.CONFIG = CONFIG;
-		this.DB = DB;
-		this.PGP = PGP;
-		const nodes = JSON.parse(this.DB.read(null, 'nodes.json'));
-		const type = Object.prototype.toString.call(nodes);
-		if (type === '[object Object]' || type === '[object Array]') {
-			this.nodes = nodes;
-		} else {
-			this.nodes = {};
-		}
+		this.nodes = {};
 	}
 
-	async add(node = { keyID: 'keyPGP', host: '127.0.0.1', port: 28262, ping: 10, publicKey: 'PGP public key' } ) {
+	async add(node = { keyID: 'keyID', net: 'ALPHA', host: '127.0.0.1', port: 28262, ping: 10 } ) {
 		try {
 			this.nodes[node.keyID] = {
+				net: node.net,
 				host: node.host,
 				port: node.port,
 				ping: node.ping
 			};
-			await this.DB.write('nodes', node.keyID, node.publicKey);
-			await this.DB.write(null, 'nodes.json', JSON.stringify(this.nodes));
 			console.log('\x1b[1m%s\x1b[0m', 'New node:', node.keyID, node.host + ':' + node.port, `(${node.ping} ms)`);
 		} catch(e) {
-//			console.log(e);
+			console.log(e);
 			return false;
 		}
 	}
@@ -40,11 +29,26 @@ class nznode {
 	async remove(keyID) {
 		try {
 			console.log('\x1b[1m%s\x1b[0m', 'Node removed:', keyID, this.nodes[keyID].host + ':' + this.nodes[keyID].port);
-			await this.DB.delete('nodes', keyID);
 			delete this.nodes[keyID];
-			await this.DB.write(null, 'nodes.json', JSON.stringify(this.nodes));
 		} catch(e) {
-//			console.log(e);
+			console.log(e);
+		}
+	}
+
+	async getNodeHash(node = { net: 'ALPHA', host: '127.0.0.1', port: 28262 }) {
+		try {
+			if (!node.net) throw new Error('Unknown parameter net');
+			if (!node.host) throw new Error('Unknown parameter host');
+			if (!node.port) throw new Error('Unknown parameter port');
+			let hash = await getHASH(JSON.stringify({
+				net: node.net,
+				host: node.host,
+				port: node.port
+			}), 'md5');
+			return hash;
+		} catch(e) {
+			console.log(e);
+			return false;
 		}
 	}
 
@@ -69,7 +73,7 @@ class nznode {
 				return false;
 			}
 		} catch(e) {
-//			console.log(e);
+			console.log(e);
 			return false;
 		}
 	}
@@ -93,12 +97,12 @@ class nznode {
 							host: list[keys[i]].host,
 							port: list[keys[i]].port
 						});
-						if (node !== false) await this.checkNodeInDB(node);
+						if (node !== false) this.add(node);
 					}
 				}
 			}
 		} catch(e) {
-//			console.log(e);
+			console.log(e);
 			return false;
 		}
 	}
@@ -117,7 +121,7 @@ class nznode {
 			};
 			await doRequest(options, JSON.stringify(message));
 		} catch(e) {
-//			console.log(e);
+			console.log(e);
 		}
 	}
 
@@ -125,65 +129,44 @@ class nznode {
 		try {
 			let keys = Object.keys(this.nodes);
 			for (let i = 0, l = keys.length; i < l; i++) {
-				await this.sendMessage({ host: this.nodes[keys[i]].host, port: this.nodes[keys[i]].port }, message);
+				await this.sendMessage({
+					host: this.nodes[keys[i]].host,
+					port: this.nodes[keys[i]].port
+				}, message);
 			}
 		} catch(e) {
-//			console.log(e);
-		}
-	}
-
-	async sendNewMessageToAll(message = {}) {
-		try {
-			let keys = Object.keys(this.nodes);
-			for (let i = 0, l = keys.length; i < l; i++) {
-				let publicKeyArmored = await this.DB.read('nodes', keys[i]);
-				// create the command "newMessage"
-				let command = JSON.stringify(message);
-				let encrypted = await this.PGP.encryptMessage(command, publicKeyArmored, true);
-				await this.sendMessage({ host: this.nodes[keys[i]].host, port: this.nodes[keys[i]].port }, { newMessage: encrypted });
-			}
-		} catch(e) {
-//			console.log(e);
+			console.log(e);
 		}
 	}
 
 	async sendHandshake(node = { host: '127.0.0.1', port: 28262 }) {
 		try {
-//			console.log('Sending handshake to', node.host + ':' + node.port);
-			let address = {	host: this.CONFIG.host, port: this.CONFIG.port };
-			let encrypted = await this.PGP.encryptMessage(JSON.stringify(address), node.publicKey, true);
-			await this.sendMessage(node, { handshake: encrypted });
+			let address = {
+				net: this.CONFIG.net,
+				host: this.CONFIG.host,
+				port: this.CONFIG.port
+			};
+			await this.sendMessage(node, { handshake: address });
 		} catch(e) {
-//			console.log(e);
+			console.log(e);
 		}
 	}
 
-	async checkNodeInDB(node) {
-		if ((node) && (node.publicKey)) try {
-			let key = await this.PGP.readKey(node.publicKey);
-			if (key) {
-				let keyID = key.getKeyID().toHex();
-				if (this.nodes[keyID] !== undefined) {
-					let publicKeyArmored = await this.DB.read('nodes', keyID);
-					if (publicKeyArmored === node.publicKey) {
-						this.nodes[keyID].ping = node.ping;
-						this.sendHandshake(node);
-					} else {
-						await this.remove(keyID);
-					}
-				} else {
-					await this.add({
-						keyID: keyID,
-						host: node.host,
-						port: node.port,
-						ping: node.ping,
-						publicKey: node.publicKey
-					});
-					this.sendHandshake(node);
-				}
-			}
+	async checkNodeInDB(node = { net: 'ALPHA', host: '127.0.0.1', port: '28262', ping: 10 }) {
+		try {
+			let hash = getNodeHash(node);
+			if (!hash) throw new Error('Unknown parameter hash');
+			if (this.nodes[hash]) throw new Error('Node already exists in the list');
+			if (node.net !== config.net) throw new Error('The node is not from our network');
+			this.add({
+				keyID: hash,
+				net: node.net,
+				host: node.host,
+				port: node.port,
+				ping: node.ping
+			});
 		} catch(e) {
-//			console.log(e);
+			console.log(e);
 		}
 	}
 
@@ -192,13 +175,14 @@ class nznode {
 		if (keys.length > 0) for (let i = 0, l = keys.length; i < l; i++) {
 			try {
 				var node = await this.getInfo({
+					net: this.nodes[keys[i]].net,
 					host: this.nodes[keys[i]].host,
 					port: this.nodes[keys[i]].port
 				});
-				if ((node !== false) && (node.net === this.CONFIG.net) && (node.publicKey !== this.PGP.publicKeyArmored)) {
+				if ((node !== false) && (node.net === this.CONFIG.net)) {
 					await this.checkNodeInDB(node);
 				} else {
-					await this.remove(keys[i]);
+					this.remove(keys[i]);
 				}
 			} catch(e) {
 //				console.log(e);
@@ -284,30 +268,6 @@ class nznode {
 //			console.log(e);
 			return false;
 		}
-	}
-
-	async senderCommandVerification(command) {
-		// receives an encrypted message with a command for the server inside
-		let result = {
-			decrypted: null,
-			result: true
-		};
-		try {
-			result.decrypted = await this.PGP.decryptMessage(command);
-			if (!result.decrypted) throw new Error();
-			let senderKeyID, senderPublicKeyArmored;
-			senderKeyID = result.decrypted.signatures[0].keyID.toHex();
-			if (this.nodes[senderKeyID] === undefined) throw new Error();
-			// check for the presence of a public key in the database of known nodes
-			senderPublicKeyArmored = await this.DB.read('nodes', senderKeyID);
-			if (!senderPublicKeyArmored) throw new Error();
-			// verification using public key
-			result.decrypted = await this.PGP.decryptMessage(command, senderPublicKeyArmored);
-			await result.decrypted.signatures[0].verified; // throws on invalid signature
-		} catch(e) {
-			result.result = false;
-		}
-		return result;
 	}
 
 }
