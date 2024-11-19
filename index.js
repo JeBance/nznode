@@ -14,7 +14,12 @@ class nznode {
 
 	async add(node = { keyID: 'keyID', net: 'ALPHA', host: '127.0.0.1', port: 28262, ping: 10 } ) {
 		try {
-			this.nodes[node.keyID] = node;
+			this.nodes[node.keyID] = {
+				net: node.net,
+				host: node.host,
+				port: node.port,
+				ping: node.ping
+			};
 			console.log('\x1b[1m%s\x1b[0m', 'New node:', node.keyID, node.host + ':' + node.port, `(${node.ping} ms)`);
 		} catch(e) {
 			console.log(e);
@@ -151,7 +156,6 @@ class nznode {
 		try {
 			let hash = await this.getNodeHash(node);
 			if (!hash) throw new Error('Unknown parameter hash');
-			if (this.nodes[hash]) throw new Error('Node already exists in the list');
 			if (node.net !== this.config.net) throw new Error('The node is not from our network');
 			this.add({
 				keyID: hash,
@@ -208,7 +212,7 @@ class nznode {
 	async pingAddresses(address) {
 		let addr = address.split('.');
 		let host, port;
-		for (let i = 1, l = 255; i < l; i++) {
+		for (let i = 100, l = 110; i < l; i++) {
 			try {
 				host = addr[0] + '.' + addr[1] + '.' + addr[2] + '.' + i;
 				port = '28262';
