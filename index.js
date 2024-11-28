@@ -52,7 +52,7 @@ class nznode {
 
 	async getInfo(address = { prot: 'http', host: '127.0.0.1', port: 28262 }) {
 		try {
-			let url = address.prot + '://' + address.host + ':', + address.port + '/info';
+			let url = address.prot + '://' + address.host + ':' + address.port + '/info';
 			let pingStart = new Date().getTime();
 			let response = await fetch(url);
 			let pingFinish = new Date().getTime();
@@ -72,7 +72,7 @@ class nznode {
 
 	async getNodes(address = { prot: 'http', host: '127.0.0.1', port: 28262 }) {
 		try {
-			let url = address.prot + '://' + address.host + ':', + address.port + '/getNodes';
+			let url = address.prot + '://' + address.host + ':' + address.port + '/getNodes';
 			let response = await fetch(url);
 			if (response.ok) {
 				let list = response.json();
@@ -96,7 +96,7 @@ class nznode {
 
 	async sendMessage(address = { prot: 'http', host: '127.0.0.1', port: 28262 }, message = {}) {
 		try {
-			let url = address.prot + '://' + address.host + ':', + address.port + '/';
+			let url = address.prot + '://' + address.host + ':' + address.port + '/';
 			await fetch(url, {
 				method: 'POST',
 				headers: {
@@ -214,7 +214,7 @@ class nznode {
 
 	async getMessage(keyID = 'someKeyMessage', address = { prot: 'http', host: '127.0.0.1', port: 28262 }) {
 		try {
-			let url = address.prot + '://' + address.host + ':', + address.port + '/getMessage?' + keyID;
+			let url = address.prot + '://' + address.host + ':' + address.port + '/getMessage?' + keyID;
 			let response = await fetch(url);
 			if (response.ok) {
 				let message = response.json();
@@ -230,7 +230,7 @@ class nznode {
 
 	async getMessages(address = { host: '127.0.0.1', port: 28262 }) {
 		try {
-			let url = address.prot + '://' + address.host + ':', + address.port + '/getMessages';
+			let url = address.prot + '://' + address.host + ':' + address.port + '/getMessages';
 			let response = await fetch(url);
 			if (response.ok) {
 				let list = response.json();
