@@ -14,6 +14,7 @@ class nznode {
 		try {
 			this.nodes[node.keyID] = {
 				net: node.net,
+				prot: node.prot,
 				host: node.host,
 				port: node.port,
 				ping: node.ping
@@ -33,13 +34,14 @@ class nznode {
 		}
 	}
 
-	async getNodeHash(node = { net: 'ALPHA', host: '127.0.0.1', port: 28262 }) {
+	async getNodeHash(node = { net: 'ALPHA', prot: 'http', host: '127.0.0.1', port: 28262 }) {
 		try {
 			if (!node.net) throw new Error('Unknown parameter net');
 			if (!node.host) throw new Error('Unknown parameter host');
 			if (!node.port) throw new Error('Unknown parameter port');
 			let hash = await getHASH(JSON.stringify({
 				net: node.net,
+				prot: node.prot,
 				host: node.host,
 				port: node.port
 			}), 'md5');
@@ -115,6 +117,7 @@ class nznode {
 			let keys = Object.keys(this.nodes);
 			for (let i = 0, l = keys.length; i < l; i++) {
 				await this.sendMessage({
+					prot: this.nodes[keys[i]].prot,
 					host: this.nodes[keys[i]].host,
 					port: this.nodes[keys[i]].port
 				}, message);
@@ -124,10 +127,11 @@ class nznode {
 		}
 	}
 
-	async sendHandshake(node = { host: '127.0.0.1', port: 28262 }) {
+	async sendHandshake(node = { prot: 'http', host: '127.0.0.1', port: 28262 }) {
 		try {
 			let address = {
 				net: this.config.net,
+				prot: this.config.prot,
 				host: this.config.host,
 				port: this.config.port
 			};
@@ -137,7 +141,7 @@ class nznode {
 		}
 	}
 
-	async checkNodeInDB(node = { net: 'ALPHA', host: '127.0.0.1', port: '28262', ping: 10 }) {
+	async checkNodeInDB(node = { net: 'ALPHA', port: 'http', host: '127.0.0.1', port: '28262', ping: 10 }) {
 		try {
 			let hash = await this.getNodeHash(node);
 			if (!hash) throw new Error('Unknown parameter hash');
@@ -146,6 +150,7 @@ class nznode {
 			this.add({
 				keyID: hash,
 				net: node.net,
+				prot: node.prot,
 				host: node.host,
 				port: node.port,
 				ping: node.ping
@@ -162,6 +167,7 @@ class nznode {
 			try {
 				var node = await this.getInfo({
 					net: this.nodes[keys[i]].net,
+					prot: this.nodes[keys[i]].prot,
 					host: this.nodes[keys[i]].host,
 					port: this.nodes[keys[i]].port
 				});
@@ -197,13 +203,14 @@ class nznode {
 
 	async pingAddresses(address) {
 		let addr = address.split('.');
-		let host, port;
+		let prot, host, port;
 		for (let i = 1, l = 255; i < l; i++) {
 			try {
+				prot = 'http';
 				host = addr[0] + '.' + addr[1] + '.' + addr[2] + '.' + i;
 				port = '28262';
 				if (host !== this.config.host) {
-					var node = await this.getInfo({ host: host, port: port });
+					var node = await this.getInfo({ prot: prot, host: host, port: port });
 					if ((node !== false) && (node.net === this.config.net)) await this.checkNodeInDB(node);
 				}
 			} catch(e) {
@@ -228,7 +235,7 @@ class nznode {
 		}
 	}
 
-	async getMessages(address = { host: '127.0.0.1', port: 28262 }) {
+	async getMessages(address = { prot: 'http', host: '127.0.0.1', port: 28262 }) {
 		try {
 			let url = address.prot + '://' + address.host + ':' + address.port + '/getMessages';
 			let response = await fetch(url);
