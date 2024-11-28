@@ -10,7 +10,7 @@ class nznode {
 		this.nodes = {};
 	}
 
-	async add(node = { keyID: 'keyID', net: 'ALPHA', host: '127.0.0.1', port: 28262, ping: 10 } ) {
+	async add(node = { keyID: 'keyID', net: 'ALPHA', prot: 'http', host: '127.0.0.1', port: 28262, ping: 10 } ) {
 		try {
 			this.nodes[node.keyID] = {
 				net: node.net,
@@ -61,6 +61,7 @@ class nznode {
 			let ping = pingFinish - pingStart;
 			if (response.ok) {
 				let info = response.json();
+				info.keyID = await this.getNodeHash(info);
 				info.ping = ping;
 				return info;
 			} else {
@@ -166,7 +167,6 @@ class nznode {
 		if (keys.length > 0) for (let i = 0, l = keys.length; i < l; i++) {
 			try {
 				var node = await this.getInfo({
-					net: this.nodes[keys[i]].net,
 					prot: this.nodes[keys[i]].prot,
 					host: this.nodes[keys[i]].host,
 					port: this.nodes[keys[i]].port
