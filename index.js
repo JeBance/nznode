@@ -1,6 +1,4 @@
-const { getHASH,
-		doRequest,
-		getResponse } = require('nzfunc');
+const { getHASH } = require('nzfunc');
 const { networkInterfaces } = require('os');
 
 class nznode {
@@ -52,21 +50,15 @@ class nznode {
 		}
 	}
 
-	async getInfo(address = { host: '127.0.0.1', port: 28262 }) {
+	async getInfo(address = { prot: 'http', host: '127.0.0.1', port: 28262 }) {
 		try {
-			let options = {
-				host: address.host,
-				port: address.port,
-				path: '/info',
-				method: 'GET'
-			};
+			let url = address.prot + '://' + address.host + ':', + address.port + '/info';
 			let pingStart = new Date().getTime();
-			let req = await doRequest(options);
+			let response = await fetch(url);
 			let pingFinish = new Date().getTime();
 			let ping = pingFinish - pingStart;
-			if (req.statusCode == 200) {
-				let res = await getResponse(req)
-				let info = JSON.parse(res);
+			if (response.ok) {
+				let info = response.json();
 				info.ping = ping;
 				return info;
 			} else {
@@ -78,22 +70,17 @@ class nznode {
 		}
 	}
 
-	async getNodes(address = { host: '127.0.0.1', port: 28262 }) {
+	async getNodes(address = { prot: 'http', host: '127.0.0.1', port: 28262 }) {
 		try {
-			let options = {
-				host: address.host,
-				port: address.port,
-				path: '/getNodes',
-				method: 'GET'
-			};
-			let req = await doRequest(options);
-			if (req.statusCode == 200) {
-				let res = await getResponse(req);
-				let list = JSON.parse(res);
+			let url = address.prot + '://' + address.host + ':', + address.port + '/getNodes';
+			let response = await fetch(url);
+			if (response.ok) {
+				let list = response.json();
 				let keys = Object.keys(list);
 				for (let i = 0, l = keys.length; i < l; i++) {
 					if (this.nodes[keys[i]] === undefined) {
 						var node = await this.getInfo({
+							prot: list[keys[i]].prot,
 							host: list[keys[i]].host,
 							port: list[keys[i]].port
 						});
@@ -107,19 +94,17 @@ class nznode {
 		}
 	}
 
-	async sendMessage(address = { host: '127.0.0.1', port: 28262 }, message = {}) {
+	async sendMessage(address = { prot: 'http', host: '127.0.0.1', port: 28262 }, message = {}) {
 		try {
-			let options = {
-				host: address.host,
-				port: address.port,
-				path: '/',
+			let url = address.prot + '://' + address.host + ':', + address.port + '/';
+			await fetch(url, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
 					'Content-Length': (JSON.stringify(message)).length
-				}
-			};
-			await doRequest(options, JSON.stringify(message));
+				},
+				body: JSON.stringify(message)
+			});
 		} catch(e) {
 //			console.log(e);
 		}
@@ -227,18 +212,12 @@ class nznode {
 		}
 	}
 
-	async getMessage(keyID = 'someKeyMessage', address = { host: '127.0.0.1', port: 28262 }) {
+	async getMessage(keyID = 'someKeyMessage', address = { prot: 'http', host: '127.0.0.1', port: 28262 }) {
 		try {
-			let options = {
-				host: address.host,
-				port: address.port,
-				path: '/getMessage?' + keyID,
-				method: 'GET'
-			};
-			let req = await doRequest(options);
-			if (req.statusCode == 200) {
-				let res = await getResponse(req);
-				let message = JSON.parse(res);
+			let url = address.prot + '://' + address.host + ':', + address.port + '/getMessage?' + keyID;
+			let response = await fetch(url);
+			if (response.ok) {
+				let message = response.json();
 				return message;
 			} else {
 				return false;
@@ -251,16 +230,10 @@ class nznode {
 
 	async getMessages(address = { host: '127.0.0.1', port: 28262 }) {
 		try {
-			let options = {
-				host: address.host,
-				port: address.port,
-				path: '/getMessages',
-				method: 'GET'
-			};
-			let req = await doRequest(options);
-			if (req.statusCode == 200) {
-				let res = await getResponse(req);
-				let list = JSON.parse(res);
+			let url = address.prot + '://' + address.host + ':', + address.port + '/getMessages';
+			let response = await fetch(url);
+			if (response.ok) {
+				let list = response.json();
 				return list;
 			} else {
 				return false;
