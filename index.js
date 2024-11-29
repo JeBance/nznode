@@ -79,21 +79,25 @@ class nznode {
 			let url = address.prot + '://' + address.host + ':' + address.port + '/getNodes';
 			let response = await fetch(url);
 			if (response.ok) {
-				let list = response.json();
+				let list = await response.json();
 				let keys = Object.keys(list);
 				for (let i = 0, l = keys.length; i < l; i++) {
-					if (this.nodes[keys[i]] === undefined) {
-						var node = await this.getInfo({
+					if ((this.nodes[keys[i]] === undefined)
+					&& (list[keys[i]].net === this.config.net)
+					&& (keys[i] !== this.config.keyID)) {
+						this.add({
+							keyID: keys[i],
+							net: list[keys[i]].net,
 							prot: list[keys[i]].prot,
 							host: list[keys[i]].host,
-							port: list[keys[i]].port
+							port: list[keys[i]].port,
+							ping: 10
 						});
-						if (node !== false) this.add(node);
 					}
 				}
 			}
 		} catch(e) {
-//			console.log(e);
+			console.log(e);
 			return false;
 		}
 	}
@@ -145,6 +149,7 @@ class nznode {
 
 	async checkNodeInDB(node = { net: 'ALPHA', port: 'http', host: '127.0.0.1', port: 28262, ping: 10 }) {
 		try {
+			if (node.keyID === this.config.keyID) throw new Error('This is this node');
 			let hash = await this.getNodeHash(node);
 			if (!hash) throw new Error('Unknown parameter hash');
 			if (node.net !== this.config.net) throw new Error('The node is not from our network');
@@ -177,13 +182,15 @@ class nznode {
 					port: this.nodes[keys[i]].port
 				});
 				if (node !== false) {
-					if (node.keyID !== keys[i]) this.remove(keys[i]);
+					if ((node.keyID !== keys[i])
+					|| (node.keyID === this.config.keyID)) this.remove(keys[i]);
 					await this.checkNodeInDB(node);
+					if (node.keyID !== this.config.keyID) await this.getNodes(node);
 				} else {
 					this.remove(keys[i]);
 				}
 			} catch(e) {
-//				console.log(e);
+				console.log(e);
 			}
 		}
 	}
@@ -230,7 +237,7 @@ class nznode {
 			let url = address.prot + '://' + address.host + ':' + address.port + '/getMessage?' + keyID;
 			let response = await fetch(url);
 			if (response.ok) {
-				let message = response.json();
+				let message = await response.json();
 				return message;
 			} else {
 				return false;
@@ -246,7 +253,7 @@ class nznode {
 			let url = address.prot + '://' + address.host + ':' + address.port + '/getMessages';
 			let response = await fetch(url);
 			if (response.ok) {
-				let list = response.json();
+				let list = await response.json();
 				return list;
 			} else {
 				return false;
