@@ -60,7 +60,8 @@ class nznode {
 			let pingFinish = new Date().getTime();
 			let ping = pingFinish - pingStart;
 			if (response.ok) {
-				let info = response.json();
+				let info = await response.json();
+				info.port = parseInt(info.port);
 				info.keyID = await this.getNodeHash(info);
 				info.ping = ping;
 				return info;
@@ -142,20 +143,24 @@ class nznode {
 		}
 	}
 
-	async checkNodeInDB(node = { net: 'ALPHA', port: 'http', host: '127.0.0.1', port: '28262', ping: 10 }) {
+	async checkNodeInDB(node = { net: 'ALPHA', port: 'http', host: '127.0.0.1', port: 28262, ping: 10 }) {
 		try {
 			let hash = await this.getNodeHash(node);
 			if (!hash) throw new Error('Unknown parameter hash');
-			if (this.nodes[hash]) throw new Error('Node already exists in the list');
 			if (node.net !== this.config.net) throw new Error('The node is not from our network');
-			this.add({
-				keyID: hash,
-				net: node.net,
-				prot: node.prot,
-				host: node.host,
-				port: node.port,
-				ping: node.ping
-			});
+			if (!this.nodes[hash]) {
+				this.add({
+					keyID: hash,
+					net: node.net,
+					prot: node.prot,
+					host: node.host,
+					port: node.port,
+					ping: node.ping
+				});
+			} else {
+				this.nodes[hash].ping = node.ping;
+//				throw new Error('Node already exists in the list');
+			}
 			await this.sendHandshake(node);
 		} catch(e) {
 //			console.log(e);
@@ -171,7 +176,8 @@ class nznode {
 					host: this.nodes[keys[i]].host,
 					port: this.nodes[keys[i]].port
 				});
-				if ((node !== false) && (node.net === this.config.net)) {
+				if (node !== false) {
+					if (node.keyID !== keys[i]) this.remove(keys[i]);
 					await this.checkNodeInDB(node);
 				} else {
 					this.remove(keys[i]);
