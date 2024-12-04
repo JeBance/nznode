@@ -2,11 +2,11 @@ const { getHASH } = require('nzfunc');
 const { networkInterfaces } = require('os');
 
 class nznode {
-	config;
+	CONFIG;
 	nodes;
 
-	constructor(config) {
-		this.config = config;
+	constructor(CONFIG) {
+		this.CONFIG = CONFIG;
 		this.nodes = {};
 	}
 
@@ -83,8 +83,8 @@ class nznode {
 				let keys = Object.keys(list);
 				for (let i = 0, l = keys.length; i < l; i++) {
 					if ((this.nodes[keys[i]] === undefined)
-					&& (list[keys[i]].net === this.config.net)
-					&& (keys[i] !== this.config.keyID)) {
+					&& (list[keys[i]].net === this.CONFIG.net)
+					&& (keys[i] !== this.CONFIG.keyID)) {
 						this.add({
 							keyID: keys[i],
 							net: list[keys[i]].net,
@@ -136,10 +136,10 @@ class nznode {
 	async sendHandshake(node = { prot: 'http', host: '127.0.0.1', port: 28262 }) {
 		try {
 			let address = {
-				net: this.config.net,
-				prot: this.config.prot,
-				host: this.config.host,
-				port: this.config.port
+				net: this.CONFIG.net,
+				prot: this.CONFIG.prot,
+				host: this.CONFIG.host,
+				port: this.CONFIG.port
 			};
 			await this.sendMessage(node, { handshake: address });
 		} catch(e) {
@@ -149,10 +149,10 @@ class nznode {
 
 	async checkNodeInDB(node = { net: 'ALPHA', port: 'http', host: '127.0.0.1', port: 28262, ping: 10 }) {
 		try {
-			if (node.keyID === this.config.keyID) throw new Error('This is this node');
+			if (node.keyID === this.CONFIG.keyID) throw new Error('This is this node');
 			let hash = await this.getNodeHash(node);
 			if (!hash) throw new Error('Unknown parameter hash');
-			if (node.net !== this.config.net) throw new Error('The node is not from our network');
+			if (node.net !== this.CONFIG.net) throw new Error('The node is not from our network');
 			if (!this.nodes[hash]) {
 				this.add({
 					keyID: hash,
@@ -183,9 +183,9 @@ class nznode {
 				});
 				if (node !== false) {
 					if ((node.keyID !== keys[i])
-					|| (node.keyID === this.config.keyID)) this.remove(keys[i]);
+					|| (node.keyID === this.CONFIG.keyID)) this.remove(keys[i]);
 					await this.checkNodeInDB(node);
-					if (node.keyID !== this.config.keyID) await this.getNodes(node);
+					if (node.keyID !== this.CONFIG.keyID) await this.getNodes(node);
 				} else {
 					this.remove(keys[i]);
 				}
@@ -222,9 +222,9 @@ class nznode {
 				prot = 'http';
 				host = addr[0] + '.' + addr[1] + '.' + addr[2] + '.' + i;
 				port = '28262';
-				if (host !== this.config.host) {
+				if (host !== this.CONFIG.host) {
 					var node = await this.getInfo({ prot: prot, host: host, port: port });
-					if ((node !== false) && (node.net === this.config.net)) await this.checkNodeInDB(node);
+					if ((node !== false) && (node.net === this.CONFIG.net)) await this.checkNodeInDB(node);
 				}
 			} catch(e) {
 //				console.log(e);
@@ -262,6 +262,54 @@ class nznode {
 //			console.log(e);
 			return false;
 		}
+	}
+
+	async firstNodeSearch() {
+		try {
+			let response = await fetch('https://raw.githubusercontent.com/JeBance/nzserver/refs/heads/gh-pages/hosts.json');
+			if (response.ok) {
+				let list = await response.json();
+				let keys = Object.keys(list);
+				for (let i = 0, l = keys.length; i < l; i++) {
+					await this.add({
+						keyID: keys[i],
+						net: list[keys[i]].net,
+						prot: list[keys[i]].prot,
+						host: list[keys[i]].host,
+						port: list[keys[i]].port,
+						ping: 10
+					});
+				}
+			} else {
+				console.log(response.status);
+			}
+		} catch(e) {
+			console.log(e);
+			process.exit(1);
+		}
+	}
+
+
+	async searchNodesInLocalNetwork() {
+		// search nodes in local network
+		if (this.CONFIG.scan !== undefined && this.CONFIG.scan === 'on') {
+			console.log('Local network scan started');
+			this.searchingNodes();
+		}
+	}
+
+	async checkNodes(MESSAGE) {
+		// check nodes
+		setInterval(async () => {
+			await this.checkingNodes();
+			// function for synchronizing messages with other nodes
+			let messages = {};
+			let keys = Object.keys(this.nodes);
+			for (let i = 0, l = keys.length; i < l; i++) {
+				messages = await this.getMessages(this.nodes[keys[i]]);
+				await MESSAGE.updateMessages(messages, this.nodes[keys[i]], this);
+			}
+		}, 1000);
 	}
 
 }
