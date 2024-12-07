@@ -1,4 +1,5 @@
-const { getHASH } = require('nzfunc');
+const nzfsdb = require('nzfsdb');
+const { getHASH, hasJsonStructure } = require('nzfunc');
 const { networkInterfaces } = require('os');
 
 class nznode {
@@ -8,6 +9,19 @@ class nznode {
 	constructor(CONFIG) {
 		this.CONFIG = CONFIG;
 		this.nodes = {};
+		try {
+			if (this.CONFIG.db !== undefined) {
+				let DB = new nzfsdb(this.CONFIG.db);
+				if (!DB.checkExists()) throw new Error('DB folder does not exist');
+				this.DB = DB;
+				if (!this.DB.checkExists(null, 'nodes.json')) throw new Error('nodes.json does not exist');
+				let nodes = this.DB.read(null, 'nodes.json');
+				if (hasJsonStructure(nodes)) this.nodes = JSON.parse(nodes);
+				if (this.CONFIG.log) console.log(this.nodes);
+			}
+		} catch(e) {
+			if (this.CONFIG.log) console.log('Error:', e);
+		}
 	}
 
 	async add(node = { keyID: 'keyID', net: 'ALPHA', prot: 'http', host: '127.0.0.1', port: 28262, ping: 10 } ) {
@@ -19,9 +33,12 @@ class nznode {
 				port: node.port,
 				ping: node.ping
 			};
+			if (this.DB !== undefined) {
+				this.DB.write(null, 'nodes.json', JSON.stringify(this.nodes));
+			}
 			console.log('\x1b[1m%s\x1b[0m', 'New node:', node.keyID, node.host + ':' + node.port, `(${node.ping} ms)`);
 		} catch(e) {
-			console.log(e);
+			if (this.CONFIG.log) console.log('Error:', e);
 		}
 	}
 
@@ -29,8 +46,11 @@ class nznode {
 		try {
 			console.log('\x1b[1m%s\x1b[0m', 'Node removed:', keyID, this.nodes[keyID].host + ':' + this.nodes[keyID].port);
 			delete this.nodes[keyID];
+			if (this.DB !== undefined) {
+				this.DB.write(null, 'nodes.json', JSON.stringify(this.nodes));
+			}
 		} catch(e) {
-			console.log(e);
+			if (this.CONFIG.log) console.log('Error:', e);
 		}
 	}
 
@@ -47,7 +67,7 @@ class nznode {
 			}), 'md5');
 			return hash;
 		} catch(e) {
-//			console.log(e);
+			if (this.CONFIG.log) console.log('Error:', e);
 			return false;
 		}
 	}
@@ -69,7 +89,7 @@ class nznode {
 				return false;
 			}
 		} catch(e) {
-//			console.log(e);
+			if (this.CONFIG.log) console.log('Error:', e);
 			return false;
 		}
 	}
@@ -97,7 +117,7 @@ class nznode {
 				}
 			}
 		} catch(e) {
-			console.log(e);
+			if (this.CONFIG.log) console.log('Error:', e);
 			return false;
 		}
 	}
@@ -114,7 +134,7 @@ class nznode {
 				body: JSON.stringify(message)
 			});
 		} catch(e) {
-//			console.log(e);
+			if (this.CONFIG.log) console.log('Error:', e);
 		}
 	}
 
@@ -129,7 +149,7 @@ class nznode {
 				}, message);
 			}
 		} catch(e) {
-//			console.log(e);
+			if (this.CONFIG.log) console.log('Error:', e);
 		}
 	}
 
@@ -143,7 +163,7 @@ class nznode {
 			};
 			await this.sendMessage(node, { handshake: address });
 		} catch(e) {
-//			console.log(e);
+			if (this.CONFIG.log) console.log('Error:', e);
 		}
 	}
 
@@ -168,7 +188,7 @@ class nznode {
 			}
 			await this.sendHandshake(node);
 		} catch(e) {
-//			console.log(e);
+			if (this.CONFIG.log) console.log('Error:', e);
 		}
 	}
 
@@ -190,7 +210,7 @@ class nznode {
 					this.remove(keys[i]);
 				}
 			} catch(e) {
-				console.log(e);
+				if (this.CONFIG.log) console.log('Error:', e);
 			}
 		}
 	}
@@ -227,7 +247,7 @@ class nznode {
 					if ((node !== false) && (node.net === this.CONFIG.net)) await this.checkNodeInDB(node);
 				}
 			} catch(e) {
-//				console.log(e);
+				if (this.CONFIG.log) console.log('Error:', e);
 			}
 		}
 	}
@@ -243,7 +263,7 @@ class nznode {
 				return false;
 			}
 		} catch(e) {
-//			console.log(e);
+			if (this.CONFIG.log) console.log('Error:', e);
 			return false;
 		}
 	}
@@ -259,7 +279,7 @@ class nznode {
 				return false;
 			}
 		} catch(e) {
-//			console.log(e);
+			if (this.CONFIG.log) console.log('Error:', e);
 			return false;
 		}
 	}
@@ -284,7 +304,7 @@ class nznode {
 				console.log(response.status);
 			}
 		} catch(e) {
-			console.log(e);
+			if (this.CONFIG.log) console.log('Error:', e);
 			process.exit(1);
 		}
 	}
