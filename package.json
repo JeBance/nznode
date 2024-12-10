@@ -1,6 +1,6 @@
 {
   "name": "nznode",
-  "version": "1.1.14",
+  "version": "1.1.15",
   "description": "Class for nzserver",
   "keywords": [
     "class",
@@ -24,9 +24,5 @@
   "bugs": {
     "url": "https://github.com/JeBance/nznode/issues"
   },
-  "homepage": "https://jebance.github.io/nznode/",
-  "dependencies": {
-    "nzfsdb": "*2.0.0",
-    "nzfunc": "*1.0.6"
-  }
+  "homepage": "https://jebance.github.io/nznode/"
 }

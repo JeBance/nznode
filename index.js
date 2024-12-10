@@ -331,7 +331,7 @@ class nznode {
 				messages = await this.getMessages(this.nodes[keys[i]]);
 				await MESSAGE.updateMessages(messages, this.nodes[keys[i]], this);
 			}
-		}, 1000);
+		}, this.CONFIG.autoCheckNodes);
 	}
 
 }
