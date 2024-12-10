@@ -20,7 +20,7 @@ class nznode {
 				if (this.CONFIG.log) console.log(this.nodes);
 			}
 		} catch(e) {
-			if (this.CONFIG.log) console.log('Error:', e);
+			if (this.CONFIG.log) console.log(e);
 		}
 	}
 
@@ -36,21 +36,21 @@ class nznode {
 			if (this.DB !== undefined) {
 				this.DB.write(null, 'nodes.json', JSON.stringify(this.nodes));
 			}
-			console.log('\x1b[1m%s\x1b[0m', 'New node:', node.keyID, node.host + ':' + node.port, `(${node.ping} ms)`);
+			if (this.CONFIG.log) console.log('\x1b[1m%s\x1b[0m', 'New node:', node.keyID, node.host + ':' + node.port, `(${node.ping} ms)`);
 		} catch(e) {
-			if (this.CONFIG.log) console.log('Error:', e);
+			if (this.CONFIG.log) console.log(e);
 		}
 	}
 
 	async remove(keyID) {
 		try {
-			console.log('\x1b[1m%s\x1b[0m', 'Node removed:', keyID, this.nodes[keyID].host + ':' + this.nodes[keyID].port);
+			if (this.CONFIG.log) console.log('\x1b[1m%s\x1b[0m', 'Node removed:', keyID, this.nodes[keyID].host + ':' + this.nodes[keyID].port);
 			delete this.nodes[keyID];
 			if (this.DB !== undefined) {
 				this.DB.write(null, 'nodes.json', JSON.stringify(this.nodes));
 			}
 		} catch(e) {
-			if (this.CONFIG.log) console.log('Error:', e);
+			if (this.CONFIG.log) console.log(e);
 		}
 	}
 
@@ -67,7 +67,7 @@ class nznode {
 			}), 'md5');
 			return hash;
 		} catch(e) {
-			if (this.CONFIG.log) console.log('Error:', e);
+			if (this.CONFIG.log) console.log(e);
 			return false;
 		}
 	}
@@ -89,7 +89,7 @@ class nznode {
 				return false;
 			}
 		} catch(e) {
-			if (this.CONFIG.log) console.log('Error:', e);
+			if (this.CONFIG.log) console.log(e);
 			return false;
 		}
 	}
@@ -117,7 +117,7 @@ class nznode {
 				}
 			}
 		} catch(e) {
-			if (this.CONFIG.log) console.log('Error:', e);
+			if (this.CONFIG.log) console.log(e);
 			return false;
 		}
 	}
@@ -134,7 +134,7 @@ class nznode {
 				body: JSON.stringify(message)
 			});
 		} catch(e) {
-			if (this.CONFIG.log) console.log('Error:', e);
+			if (this.CONFIG.log) console.log(e);
 		}
 	}
 
@@ -149,7 +149,7 @@ class nznode {
 				}, message);
 			}
 		} catch(e) {
-			if (this.CONFIG.log) console.log('Error:', e);
+			if (this.CONFIG.log) console.log(e);
 		}
 	}
 
@@ -163,7 +163,7 @@ class nznode {
 			};
 			await this.sendMessage(node, { handshake: address });
 		} catch(e) {
-			if (this.CONFIG.log) console.log('Error:', e);
+			if (this.CONFIG.log) console.log(e);
 		}
 	}
 
@@ -184,11 +184,10 @@ class nznode {
 				});
 			} else {
 				this.nodes[hash].ping = node.ping;
-//				throw new Error('Node already exists in the list');
 			}
 			await this.sendHandshake(node);
 		} catch(e) {
-			if (this.CONFIG.log) console.log('Error:', e);
+			if (this.CONFIG.log) console.log(e);
 		}
 	}
 
@@ -210,8 +209,10 @@ class nznode {
 					this.remove(keys[i]);
 				}
 			} catch(e) {
-				if (this.CONFIG.log) console.log('Error:', e);
+				if (this.CONFIG.log) console.log(e);
 			}
+		} else {
+			await this.firstNodeSearch();
 		}
 	}
 
@@ -247,7 +248,7 @@ class nznode {
 					if ((node !== false) && (node.net === this.CONFIG.net)) await this.checkNodeInDB(node);
 				}
 			} catch(e) {
-				if (this.CONFIG.log) console.log('Error:', e);
+				if (this.CONFIG.log) console.log(e);
 			}
 		}
 	}
@@ -263,7 +264,7 @@ class nznode {
 				return false;
 			}
 		} catch(e) {
-			if (this.CONFIG.log) console.log('Error:', e);
+			if (this.CONFIG.log) console.log(e);
 			return false;
 		}
 	}
@@ -279,7 +280,7 @@ class nznode {
 				return false;
 			}
 		} catch(e) {
-			if (this.CONFIG.log) console.log('Error:', e);
+			if (this.CONFIG.log) console.log(e);
 			return false;
 		}
 	}
@@ -291,6 +292,7 @@ class nznode {
 				let list = await response.json();
 				let keys = Object.keys(list);
 				for (let i = 0, l = keys.length; i < l; i++) {
+					if (this.nodes[keys[i]] === undefined)
 					await this.add({
 						keyID: keys[i],
 						net: list[keys[i]].net,
@@ -301,10 +303,10 @@ class nznode {
 					});
 				}
 			} else {
-				console.log(response.status);
+				if (this.CONFIG.log) console.log(response.status);
 			}
 		} catch(e) {
-			if (this.CONFIG.log) console.log('Error:', e);
+			if (this.CONFIG.log) console.log(e);
 			process.exit(1);
 		}
 	}
